@@ -1,11 +1,22 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useEffect } from "react";
 import { Entreprise } from "@/types";
 
 interface MapViewProps {
   entreprises: Entreprise[];
   onSelect: (entreprise: Entreprise) => void;
+}
+
+function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useMap } = require("react-leaflet");
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(center, zoom);
+  }, [map, center, zoom]);
+  return null;
 }
 
 // Inner component — only imported client-side (no SSR)
@@ -54,6 +65,7 @@ function MapViewInner({ entreprises, onSelect }: MapViewProps) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <ChangeView center={center} zoom={zoom} />
       {withCoords.map((entreprise) => (
         <Marker
           key={entreprise.siren}
