@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown, ChevronUp, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ const DEFAULT_FORM = {
 
 export function SearchFilters({ onSearch, loading }: SearchFiltersProps) {
   const [form, setForm] = useState(DEFAULT_FORM);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   function handleChange(field: string, value: string | boolean | null) {
     setForm((prev) => ({ ...prev, [field]: value ?? "" }));
@@ -106,172 +108,191 @@ export function SearchFilters({ onSearch, loading }: SearchFiltersProps) {
         />
       </div>
 
-      {/* Section NAF */}
-      <div className="space-y-1.5">
-        <Label htmlFor="section_naf">Section NAF</Label>
-        <Select
-          value={form.section_activite_principale}
-          onValueChange={handleSelectChange("section_activite_principale")}
-        >
-          <SelectTrigger id="section_naf">
-            <SelectValue placeholder="Toutes les sections" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les sections</SelectItem>
-            {NAF_SECTIONS.map((s) => (
-              <SelectItem key={s.value} value={s.value}>
-                {s.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Toggle filtres avancés */}
+      <button
+        type="button"
+        onClick={() => setShowAdvanced((v) => !v)}
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
+      >
+        <SlidersHorizontal className="h-3.5 w-3.5" />
+        Filtres avancés
+        {showAdvanced ? (
+          <ChevronUp className="h-3.5 w-3.5 ml-auto" />
+        ) : (
+          <ChevronDown className="h-3.5 w-3.5 ml-auto" />
+        )}
+      </button>
 
-      {/* Code NAF précis */}
-      <div className="space-y-1.5">
-        <Label htmlFor="code_naf">Code NAF précis</Label>
-        <Input
-          id="code_naf"
-          placeholder="Ex : 6201Z"
-          value={form.code_naf}
-          onChange={(e) => handleChange("code_naf", e.target.value)}
-        />
-      </div>
+      {showAdvanced && (
+        <div className="space-y-4">
+          {/* Section NAF */}
+          <div className="space-y-1.5">
+            <Label htmlFor="section_naf">Section NAF</Label>
+            <Select
+              value={form.section_activite_principale}
+              onValueChange={handleSelectChange("section_activite_principale")}
+            >
+              <SelectTrigger id="section_naf">
+                <SelectValue placeholder="Toutes les sections" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les sections</SelectItem>
+                {NAF_SECTIONS.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* Code postal & Département */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="code_postal">Code postal</Label>
-          <Input
-            id="code_postal"
-            placeholder="Ex : 75001"
-            value={form.code_postal}
-            onChange={(e) => handleChange("code_postal", e.target.value)}
-          />
+          {/* Code NAF précis */}
+          <div className="space-y-1.5">
+            <Label htmlFor="code_naf">Code NAF précis</Label>
+            <Input
+              id="code_naf"
+              placeholder="Ex : 6201Z"
+              value={form.code_naf}
+              onChange={(e) => handleChange("code_naf", e.target.value)}
+            />
+          </div>
+
+          {/* Code postal & Département */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="code_postal">Code postal</Label>
+              <Input
+                id="code_postal"
+                placeholder="Ex : 75001"
+                value={form.code_postal}
+                onChange={(e) => handleChange("code_postal", e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="departement">Département</Label>
+              <Input
+                id="departement"
+                placeholder="Ex : 75"
+                value={form.departement}
+                onChange={(e) => handleChange("departement", e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Tranche effectif */}
+          <div className="space-y-1.5">
+            <Label htmlFor="tranche_effectif">Tranche effectif</Label>
+            <Select
+              value={form.tranche_effectif_salarie}
+              onValueChange={handleSelectChange("tranche_effectif_salarie")}
+            >
+              <SelectTrigger id="tranche_effectif">
+                <SelectValue placeholder="Toutes les tranches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les tranches</SelectItem>
+                <SelectGroup>
+                  <SelectLabel>Micro (0-9 salariés)</SelectLabel>
+                  <SelectItem value="00">0 salarié</SelectItem>
+                  <SelectItem value="01">1 à 2 salariés</SelectItem>
+                  <SelectItem value="02">3 à 5 salariés</SelectItem>
+                  <SelectItem value="03">6 à 9 salariés</SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Petites (10-49 salariés)</SelectLabel>
+                  <SelectItem value="11">10 à 19 salariés</SelectItem>
+                  <SelectItem value="12">20 à 49 salariés</SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Moyennes (50-199 salariés)</SelectLabel>
+                  <SelectItem value="21">50 à 99 salariés</SelectItem>
+                  <SelectItem value="22">100 à 199 salariés</SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Intermédiaires (200-499 salariés)</SelectLabel>
+                  <SelectItem value="31">200 à 249 salariés</SelectItem>
+                  <SelectItem value="32">250 à 499 salariés</SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Grandes (500+ salariés)</SelectLabel>
+                  <SelectItem value="41">500 à 999 salariés</SelectItem>
+                  <SelectItem value="42">1 000 à 1 999 salariés</SelectItem>
+                  <SelectItem value="51">2 000 à 4 999 salariés</SelectItem>
+                  <SelectItem value="52">5 000 à 9 999 salariés</SelectItem>
+                  <SelectItem value="53">10 000 salariés et plus</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Catégorie */}
+          <div className="space-y-1.5">
+            <Label htmlFor="categorie">Catégorie</Label>
+            <Select
+              value={form.categorie_entreprise}
+              onValueChange={handleSelectChange("categorie_entreprise")}
+            >
+              <SelectTrigger id="categorie">
+                <SelectValue placeholder="Toutes les catégories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les catégories</SelectItem>
+                <SelectItem value="PME">PME — Petite et Moyenne Entreprise</SelectItem>
+                <SelectItem value="ETI">ETI — Entreprise de Taille Intermédiaire</SelectItem>
+                <SelectItem value="GE">GE — Grande Entreprise</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* CA min / max */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="ca_min">CA min (€)</Label>
+              <Input
+                id="ca_min"
+                type="number"
+                placeholder="0"
+                min={0}
+                value={form.ca_min}
+                onChange={(e) => handleChange("ca_min", e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ca_max">CA max (€)</Label>
+              <Input
+                id="ca_max"
+                type="number"
+                placeholder="Illimité"
+                min={0}
+                value={form.ca_max}
+                onChange={(e) => handleChange("ca_max", e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Checkboxes */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <input
+                type="checkbox"
+                checked={form.est_ess}
+                onChange={(e) => handleChange("est_ess", e.target.checked)}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              Économie Sociale et Solidaire (ESS)
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <input
+                type="checkbox"
+                checked={form.est_qualiopi}
+                onChange={(e) => handleChange("est_qualiopi", e.target.checked)}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              Certifié Qualiopi
+            </label>
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="departement">Département</Label>
-          <Input
-            id="departement"
-            placeholder="Ex : 75"
-            value={form.departement}
-            onChange={(e) => handleChange("departement", e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Tranche effectif */}
-      <div className="space-y-1.5">
-        <Label htmlFor="tranche_effectif">Tranche effectif</Label>
-        <Select
-          value={form.tranche_effectif_salarie}
-          onValueChange={handleSelectChange("tranche_effectif_salarie")}
-        >
-          <SelectTrigger id="tranche_effectif">
-            <SelectValue placeholder="Toutes les tranches" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les tranches</SelectItem>
-            <SelectGroup>
-              <SelectLabel>Micro (0-9 salariés)</SelectLabel>
-              <SelectItem value="00">0 salarié</SelectItem>
-              <SelectItem value="01">1 à 2 salariés</SelectItem>
-              <SelectItem value="02">3 à 5 salariés</SelectItem>
-              <SelectItem value="03">6 à 9 salariés</SelectItem>
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel>Petites (10-49 salariés)</SelectLabel>
-              <SelectItem value="11">10 à 19 salariés</SelectItem>
-              <SelectItem value="12">20 à 49 salariés</SelectItem>
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel>Moyennes (50-199 salariés)</SelectLabel>
-              <SelectItem value="21">50 à 99 salariés</SelectItem>
-              <SelectItem value="22">100 à 199 salariés</SelectItem>
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel>Intermédiaires (200-499 salariés)</SelectLabel>
-              <SelectItem value="31">200 à 249 salariés</SelectItem>
-              <SelectItem value="32">250 à 499 salariés</SelectItem>
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel>Grandes (500+ salariés)</SelectLabel>
-              <SelectItem value="41">500 à 999 salariés</SelectItem>
-              <SelectItem value="42">1 000 à 1 999 salariés</SelectItem>
-              <SelectItem value="51">2 000 à 4 999 salariés</SelectItem>
-              <SelectItem value="52">5 000 à 9 999 salariés</SelectItem>
-              <SelectItem value="53">10 000 salariés et plus</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Catégorie */}
-      <div className="space-y-1.5">
-        <Label htmlFor="categorie">Catégorie</Label>
-        <Select
-          value={form.categorie_entreprise}
-          onValueChange={handleSelectChange("categorie_entreprise")}
-        >
-          <SelectTrigger id="categorie">
-            <SelectValue placeholder="Toutes les catégories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les catégories</SelectItem>
-            <SelectItem value="PME">PME — Petite et Moyenne Entreprise</SelectItem>
-            <SelectItem value="ETI">ETI — Entreprise de Taille Intermédiaire</SelectItem>
-            <SelectItem value="GE">GE — Grande Entreprise</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* CA min / max */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="ca_min">CA min (€)</Label>
-          <Input
-            id="ca_min"
-            type="number"
-            placeholder="0"
-            min={0}
-            value={form.ca_min}
-            onChange={(e) => handleChange("ca_min", e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="ca_max">CA max (€)</Label>
-          <Input
-            id="ca_max"
-            type="number"
-            placeholder="Illimité"
-            min={0}
-            value={form.ca_max}
-            onChange={(e) => handleChange("ca_max", e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Checkboxes */}
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 cursor-pointer text-sm">
-          <input
-            type="checkbox"
-            checked={form.est_ess}
-            onChange={(e) => handleChange("est_ess", e.target.checked)}
-            className="h-4 w-4 rounded border-border accent-primary"
-          />
-          Économie Sociale et Solidaire (ESS)
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer text-sm">
-          <input
-            type="checkbox"
-            checked={form.est_qualiopi}
-            onChange={(e) => handleChange("est_qualiopi", e.target.checked)}
-            className="h-4 w-4 rounded border-border accent-primary"
-          />
-          Certifié Qualiopi
-        </label>
-      </div>
+      )}
 
       {/* Boutons */}
       <div className="flex gap-2">

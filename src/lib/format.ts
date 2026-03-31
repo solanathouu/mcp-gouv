@@ -16,7 +16,7 @@ export function formatEffectif(tranche: string | null): string {
     "52": "5 000-9 999",
     "53": "10 000+",
   };
-  return tranche ? (map[tranche] ?? tranche) : "N/A";
+  return tranche ? (map[tranche] ?? tranche) : "N/D";
 }
 
 export function formatNatureJuridique(code: string | null): string {

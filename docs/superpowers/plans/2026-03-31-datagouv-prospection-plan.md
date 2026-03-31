@@ -107,7 +107,7 @@ npx shadcn@latest add button input label select card dialog sheet badge separato
 
 Create `src/../.env`:
 ```env
-GEMINI_API_KEY=REDACTED_API_KEY
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 - [ ] **Step 5: Update .gitignore**
