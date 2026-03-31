@@ -41,20 +41,30 @@ export function buildNearPointUrl(params: GeoSearchParams): string {
   return url.toString();
 }
 
+async function fetchWithRetry(url: string, maxRetries = 3): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url);
+    if (response.status === 429 && attempt < maxRetries) {
+      const waitMs = Math.pow(2, attempt) * 500;
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      continue;
+    }
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    return response;
+  }
+  throw new Error("API error: max retries exceeded (429 Too Many Requests)");
+}
+
 export async function searchEntreprises(params: SearchParams): Promise<ApiSearchResponse> {
   const url = buildSearchUrl(params);
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`API Recherche Entreprises error: ${response.status} ${response.statusText}`);
-  }
+  const response = await fetchWithRetry(url);
   return response.json();
 }
 
 export async function searchNearPoint(params: GeoSearchParams): Promise<ApiSearchResponse> {
   const url = buildNearPointUrl(params);
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`API Near Point error: ${response.status} ${response.statusText}`);
-  }
+  const response = await fetchWithRetry(url);
   return response.json();
 }

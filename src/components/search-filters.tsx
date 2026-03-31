@@ -46,12 +46,12 @@ interface SearchFiltersProps {
 
 const DEFAULT_FORM = {
   q: "",
-  section_activite_principale: "",
+  section_activite_principale: "all",
   code_naf: "",
   code_postal: "",
   departement: "",
-  tranche_effectif_salarie: "",
-  categorie_entreprise: "",
+  tranche_effectif_salarie: "all",
+  categorie_entreprise: "all",
   ca_min: "",
   ca_max: "",
   est_ess: false,
@@ -110,7 +110,7 @@ export function SearchFilters({ onSearch, loading }: SearchFiltersProps) {
       <div className="space-y-1.5">
         <Label htmlFor="section_naf">Section NAF</Label>
         <Select
-          value={form.section_activite_principale || undefined}
+          value={form.section_activite_principale}
           onValueChange={handleSelectChange("section_activite_principale")}
         >
           <SelectTrigger id="section_naf">
@@ -164,7 +164,7 @@ export function SearchFilters({ onSearch, loading }: SearchFiltersProps) {
       <div className="space-y-1.5">
         <Label htmlFor="tranche_effectif">Tranche effectif</Label>
         <Select
-          value={form.tranche_effectif_salarie || undefined}
+          value={form.tranche_effectif_salarie}
           onValueChange={handleSelectChange("tranche_effectif_salarie")}
         >
           <SelectTrigger id="tranche_effectif">
@@ -210,7 +210,7 @@ export function SearchFilters({ onSearch, loading }: SearchFiltersProps) {
       <div className="space-y-1.5">
         <Label htmlFor="categorie">Catégorie</Label>
         <Select
-          value={form.categorie_entreprise || undefined}
+          value={form.categorie_entreprise}
           onValueChange={handleSelectChange("categorie_entreprise")}
         >
           <SelectTrigger id="categorie">
