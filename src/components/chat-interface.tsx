@@ -57,17 +57,11 @@ export function ChatInterface({ onSelectEntreprise, onAddToList }: ChatInterface
     setLoading(true);
     setStatus("Analyse de votre requête...");
 
-    // Prepare conversation history (exclude welcome message)
-    const history = messages
-      .filter((m) => m.id !== "welcome")
-      .map((m) => ({ role: m.role, content: m.content }));
-    history.push({ role: "user", content: text });
-
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ message: text }),
       });
 
       if (!res.ok || !res.body) {
@@ -95,19 +89,17 @@ export function ChatInterface({ onSelectEntreprise, onAddToList }: ChatInterface
           if (!raw || raw === "[DONE]") continue;
 
           try {
-            const event = JSON.parse(raw) as {
-              type: string;
-              content?: string;
-              entreprises?: Entreprise[];
-              message?: string;
+            const parsed = JSON.parse(raw) as {
+              event: string;
+              data: string | { results: Entreprise[] };
             };
 
-            if (event.type === "status" && event.message) {
-              setStatus(event.message);
-            } else if (event.type === "entreprises" && event.entreprises) {
-              assistantEntreprises = event.entreprises;
-            } else if (event.type === "message" && event.content) {
-              assistantContent = event.content;
+            if (parsed.event === "status") {
+              setStatus(parsed.data as string);
+            } else if (parsed.event === "entreprises") {
+              assistantEntreprises = (parsed.data as { results: Entreprise[] }).results;
+            } else if (parsed.event === "message") {
+              assistantContent = parsed.data as string;
               setMessages((prev) => {
                 const exists = prev.find((m) => m.id === assistantId);
                 const newMsg: ChatMessageType = {
@@ -122,8 +114,8 @@ export function ChatInterface({ onSelectEntreprise, onAddToList }: ChatInterface
                 }
                 return [...prev, newMsg];
               });
-            } else if (event.type === "error") {
-              throw new Error(event.message ?? "Erreur inconnue");
+            } else if (parsed.event === "error") {
+              throw new Error((parsed.data as string) ?? "Erreur inconnue");
             }
           } catch {
             // Skip malformed JSON

@@ -124,7 +124,7 @@ export function ListeManager() {
     setError(null);
     try {
       const res = await fetch(`/api/listes/${id}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nom: editName.trim() }),
       });
@@ -158,8 +158,10 @@ export function ListeManager() {
     if (!selectedListe) return;
     setError(null);
     try {
-      const res = await fetch(`/api/listes/${selectedListe.id}/entreprises/${siren}`, {
+      const res = await fetch(`/api/listes/${selectedListe.id}/entreprises`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ siren }),
       });
       if (!res.ok) throw new Error("Erreur lors de la suppression");
       setEntreprises((prev) => prev.filter((e) => e.siren !== siren));

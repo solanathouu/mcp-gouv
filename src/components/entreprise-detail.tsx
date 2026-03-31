@@ -201,7 +201,7 @@ export function EntrepriseDetail({ siren, onClose, onAddToList }: EntrepriseDeta
               </Button>
               <Button
                 variant="outline"
-                onClick={() => fetchData(entreprise.siren)}
+                onClick={() => fetchData(entreprise.siren + "?refresh=true")}
                 className="w-full"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
