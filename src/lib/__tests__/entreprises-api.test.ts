@@ -7,7 +7,7 @@ describe("buildSearchUrl", () => {
     expect(url).toContain("q=boulangerie");
     expect(url).toContain("page=1");
     expect(url).toContain("per_page=10");
-    expect(url).toContain("include=complements");
+    expect(url).not.toContain("include=");
   });
 
   it("builds URL with multiple filters", () => {

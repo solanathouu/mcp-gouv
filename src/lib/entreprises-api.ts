@@ -1,7 +1,7 @@
 import type { SearchParams, GeoSearchParams, ApiSearchResponse } from "@/types";
 
 const BASE_URL = "https://recherche-entreprises.api.gouv.fr";
-const DEFAULT_INCLUDE = "complements,dirigeants,finances,siege,matching_etablissements";
+// L'API retourne toutes les données par défaut — pas besoin de "include"
 
 export function buildSearchUrl(params: SearchParams): string {
   const url = new URL(`${BASE_URL}/search`);
@@ -24,7 +24,6 @@ export function buildSearchUrl(params: SearchParams): string {
   if (params.nom_personne) url.searchParams.set("nom_personne", params.nom_personne);
   url.searchParams.set("page", String(params.page ?? 1));
   url.searchParams.set("per_page", String(params.per_page ?? 25));
-  url.searchParams.set("include", DEFAULT_INCLUDE);
   return url.toString();
 }
 
@@ -37,7 +36,6 @@ export function buildNearPointUrl(params: GeoSearchParams): string {
   if (params.section_activite_principale) url.searchParams.set("section_activite_principale", params.section_activite_principale);
   url.searchParams.set("page", String(params.page ?? 1));
   url.searchParams.set("per_page", String(params.per_page ?? 25));
-  url.searchParams.set("include", DEFAULT_INCLUDE);
   return url.toString();
 }
 
