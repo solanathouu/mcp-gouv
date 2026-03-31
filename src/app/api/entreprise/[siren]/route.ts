@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchEntreprises } from "@/lib/entreprises-api";
 import { getCachedEntreprise, mapApiToEntreprise, cacheEntreprise } from "@/lib/cache";
+import { searchDatasets, parseDataGouvDatasets } from "@/lib/datagouv";
 
 export async function GET(
   request: NextRequest,
@@ -38,7 +39,19 @@ export async function GET(
     const entreprise = mapApiToEntreprise(raw);
     cacheEntreprise(entreprise);
 
-    return NextResponse.json(entreprise);
+    // Fetch related public datasets from MCP DataGouv (best-effort)
+    let datasets: import("@/types").DataGouvDataset[] = [];
+    try {
+      const nafQuery = entreprise.libelle_naf ?? entreprise.code_naf ?? entreprise.raison_sociale;
+      if (nafQuery) {
+        const mcpResult = await searchDatasets(nafQuery, 1, 5);
+        datasets = parseDataGouvDatasets(mcpResult, 5);
+      }
+    } catch (mcpErr) {
+      console.warn("[entreprise/siren] MCP DataGouv call failed (non-critical):", mcpErr);
+    }
+
+    return NextResponse.json({ ...entreprise, datasets });
   } catch (error) {
     console.error("[entreprise/siren] Error:", error);
     return NextResponse.json(

@@ -12,7 +12,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Entreprise } from "@/types";
+import { Entreprise, DataGouvDataset } from "@/types";
 import { formatEffectif } from "@/lib/format";
 
 interface EntrepriseDetailProps {
@@ -40,6 +40,7 @@ function Row({ label, value }: { label: string; value: string | null | undefined
 
 export function EntrepriseDetail({ siren, onClose, onAddToList }: EntrepriseDetailProps) {
   const [entreprise, setEntreprise] = useState<Entreprise | null>(null);
+  const [datasets, setDatasets] = useState<DataGouvDataset[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +51,10 @@ export function EntrepriseDetail({ siren, onClose, onAddToList }: EntrepriseDeta
       const res = await fetch(`/api/entreprise/${s}`);
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       const data = await res.json();
-      setEntreprise(data);
+      // Extract datasets from response if present
+      const { datasets: ds, ...rest } = data as Entreprise & { datasets?: DataGouvDataset[] };
+      setEntreprise(rest as Entreprise);
+      setDatasets(Array.isArray(ds) ? ds : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -167,6 +171,33 @@ export function EntrepriseDetail({ siren, onClose, onAddToList }: EntrepriseDeta
                   <h3 className="text-sm font-semibold mb-2">Dirigeant</h3>
                   <Row label="Nom" value={entreprise.dirigeant_nom} />
                   <Row label="Fonction" value={entreprise.dirigeant_fonction} />
+                </div>
+              </>
+            )}
+
+            {/* Données publiques */}
+            {datasets.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="text-sm font-semibold mb-2">Données publiques</h3>
+                  <div className="space-y-2">
+                    {datasets.map((d) => (
+                      <div key={d.id} className="flex items-start justify-between gap-2 text-sm py-1">
+                        <span className="text-foreground font-medium line-clamp-2 flex-1">{d.title}</span>
+                        <a
+                          href={d.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 text-primary hover:underline flex items-center gap-1"
+                          title="Voir sur data.gouv.fr"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          <span className="text-xs">data.gouv.fr</span>
+                        </a>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </>
             )}

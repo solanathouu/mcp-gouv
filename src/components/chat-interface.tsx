@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/components/chat-message";
-import type { ChatMessage as ChatMessageType, Entreprise } from "@/types";
+import type { ChatMessage as ChatMessageType, Entreprise, DataGouvDataset } from "@/types";
 
 interface ChatInterfaceProps {
   onSelectEntreprise: (entreprise: Entreprise) => void;
@@ -73,6 +73,7 @@ export function ChatInterface({ onSelectEntreprise, onAddToList }: ChatInterface
       let buffer = "";
       let assistantContent = "";
       let assistantEntreprises: Entreprise[] | undefined;
+      let assistantDatasets: DataGouvDataset[] | undefined;
       const assistantId = `assistant-${Date.now()}`;
 
       while (true) {
@@ -91,13 +92,15 @@ export function ChatInterface({ onSelectEntreprise, onAddToList }: ChatInterface
           try {
             const parsed = JSON.parse(raw) as {
               event: string;
-              data: string | { results: Entreprise[] };
+              data: string | { results: Entreprise[] } | DataGouvDataset[];
             };
 
             if (parsed.event === "status") {
               setStatus(parsed.data as string);
             } else if (parsed.event === "entreprises") {
               assistantEntreprises = (parsed.data as { results: Entreprise[] }).results;
+            } else if (parsed.event === "datasets") {
+              assistantDatasets = parsed.data as DataGouvDataset[];
             } else if (parsed.event === "message") {
               assistantContent = parsed.data as string;
               setMessages((prev) => {
@@ -107,6 +110,7 @@ export function ChatInterface({ onSelectEntreprise, onAddToList }: ChatInterface
                   role: "assistant",
                   content: assistantContent,
                   entreprises: assistantEntreprises,
+                  datasets: assistantDatasets,
                   timestamp: new Date().toISOString(),
                 };
                 if (exists) {
@@ -179,6 +183,7 @@ export function ChatInterface({ onSelectEntreprise, onAddToList }: ChatInterface
               role={msg.role}
               content={msg.content}
               entreprises={msg.entreprises}
+              datasets={msg.datasets}
               onSelectEntreprise={onSelectEntreprise}
               onAddToList={onAddToList}
             />

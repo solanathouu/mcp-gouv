@@ -180,11 +180,20 @@ export interface HistoriqueRecherche {
   resultats_ids: string;
 }
 
+export interface DataGouvDataset {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  organization: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   entreprises?: Entreprise[];
+  datasets?: DataGouvDataset[];
   timestamp: string;
 }
 

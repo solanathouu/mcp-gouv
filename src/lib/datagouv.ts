@@ -1,4 +1,4 @@
-import type { McpJsonRpcRequest, McpJsonRpcResponse } from "@/types";
+import type { McpJsonRpcRequest, McpJsonRpcResponse, DataGouvDataset } from "@/types";
 
 const MCP_URL = "https://mcp.data.gouv.fr/mcp";
 let requestId = 0;
@@ -67,4 +67,63 @@ export async function getMetrics(datasetId?: string, resourceId?: string) {
   if (datasetId) args.dataset_id = datasetId;
   if (resourceId) args.resource_id = resourceId;
   return mcpCall("tools/call", { name: "get_metrics", arguments: args });
+}
+
+/**
+ * Parse the MCP tool result into a typed array of DataGouvDataset.
+ * The MCP returns { content: [{ type: "text", text: "<json or markdown>" }] }
+ */
+export function parseDataGouvDatasets(result: unknown, maxResults = 5): DataGouvDataset[] {
+  try {
+    // result is { content: [{ type: string; text: string }] }
+    const res = result as { content?: { type: string; text: string }[] };
+    const textBlock = res?.content?.find((c) => c.type === "text");
+    if (!textBlock?.text) return [];
+
+    const raw = textBlock.text.trim();
+
+    // Try to parse as JSON directly
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      // Try to extract JSON array / object from markdown code block
+      const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/) ?? raw.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
+      if (!jsonMatch) return [];
+      try {
+        parsed = JSON.parse(jsonMatch[1].trim());
+      } catch {
+        return [];
+      }
+    }
+
+    // Normalize: accept array or { datasets: [...] } or { results: [...] }
+    let items: unknown[] = [];
+    if (Array.isArray(parsed)) {
+      items = parsed;
+    } else if (parsed && typeof parsed === "object") {
+      const obj = parsed as Record<string, unknown>;
+      if (Array.isArray(obj.datasets)) items = obj.datasets as unknown[];
+      else if (Array.isArray(obj.results)) items = obj.results as unknown[];
+      else if (Array.isArray(obj.data)) items = obj.data as unknown[];
+    }
+
+    return items.slice(0, maxResults).map((item) => {
+      const d = item as Record<string, unknown>;
+      return {
+        id: String(d.id ?? d.slug ?? ""),
+        title: String(d.title ?? d.nom ?? ""),
+        description: String(d.description ?? d.resume ?? ""),
+        url: String(d.url ?? d.page ?? (d.id ? `https://www.data.gouv.fr/fr/datasets/${d.id}/` : "")),
+        organization: String(
+          (d.organization as Record<string, unknown> | null)?.name ??
+            d.organization ??
+            d.organisation ??
+            ""
+        ),
+      };
+    }).filter((d) => d.title);
+  } catch {
+    return [];
+  }
 }

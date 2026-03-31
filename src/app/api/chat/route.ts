@@ -2,9 +2,10 @@ import { NextRequest } from "next/server";
 import { interpretQuery, getGeminiModel, synthesizeResults } from "@/lib/gemini";
 import { searchEntreprises, searchNearPoint } from "@/lib/entreprises-api";
 import { mapApiToEntreprise, cacheEntreprises } from "@/lib/cache";
+import { searchDatasets, parseDataGouvDatasets } from "@/lib/datagouv";
 import { db } from "@/lib/db";
 import { historiqueRecherches } from "@/db/schema";
-import type { Entreprise } from "@/types";
+import type { Entreprise, DataGouvDataset } from "@/types";
 
 function encode(encoder: TextEncoder, event: string, data: unknown): Uint8Array {
   const payload = JSON.stringify({ event, data });
@@ -73,16 +74,31 @@ export async function POST(request: NextRequest) {
         // 9. Send entreprises event
         controller.enqueue(encode(encoder, "entreprises", { results: entreprises, total_results: totalResults }));
 
-        // 10. Status: analyzing results
+        // 10. Fetch related public datasets from MCP DataGouv (best-effort)
+        let datasets: DataGouvDataset[] = [];
+        try {
+          controller.enqueue(encode(encoder, "status", "Recherche de données publiques associées..."));
+          // Derive a compact query from the user message (first 5 words)
+          const datasetQuery = message.trim().split(/\s+/).slice(0, 5).join(" ");
+          const mcpResult = await searchDatasets(datasetQuery, 1, 5);
+          datasets = parseDataGouvDatasets(mcpResult, 5);
+          if (datasets.length > 0) {
+            controller.enqueue(encode(encoder, "datasets", datasets));
+          }
+        } catch (mcpErr) {
+          console.warn("[chat] MCP DataGouv call failed (non-critical):", mcpErr);
+        }
+
+        // 11. Status: analyzing results
         controller.enqueue(encode(encoder, "status", "Analyse des résultats..."));
 
-        // 11. Synthesize results
-        const synthesis = await synthesizeResults(message, entreprises, totalResults);
+        // 12. Synthesize results (with optional datasets context)
+        const synthesis = await synthesizeResults(message, entreprises, totalResults, datasets.length > 0 ? datasets : undefined);
 
-        // 12. Send message event with synthesis
+        // 13. Send message event with synthesis
         controller.enqueue(encode(encoder, "message", synthesis));
 
-        // 13. Close stream
+        // 14. Close stream
         controller.close();
       } catch (error) {
         console.error("[chat] Error:", error);

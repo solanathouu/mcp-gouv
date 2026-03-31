@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { GeminiSearchIntent, Entreprise } from "@/types";
+import type { GeminiSearchIntent, Entreprise, DataGouvDataset } from "@/types";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -144,7 +144,8 @@ export async function interpretQuery(userMessage: string): Promise<GeminiSearchI
 export async function synthesizeResults(
   userMessage: string,
   entreprises: Entreprise[],
-  totalResults: number
+  totalResults: number,
+  datasets?: DataGouvDataset[]
 ): Promise<string> {
   const model = getGeminiModel();
   const summary = entreprises.slice(0, 10).map((e) => ({
@@ -156,12 +157,22 @@ export async function synthesizeResults(
     dirigeant: e.dirigeant_nom,
     ca: e.chiffre_affaires,
   }));
+
+  const datasetsSection =
+    datasets && datasets.length > 0
+      ? `\n\nJeux de données publics disponibles sur data.gouv.fr (à mentionner si pertinent) :\n${datasets
+          .map((d) => `- ${d.title} (${d.organization}) : ${d.description.slice(0, 120)}`)
+          .join("\n")}`
+      : "";
+
   const prompt = `L'utilisateur a demandé : "${userMessage}"
 
 Voici les résultats (${totalResults} au total, les ${summary.length} premiers affichés) :
-${JSON.stringify(summary, null, 2)}
+${JSON.stringify(summary, null, 2)}${datasetsSection}
 
-Fais une synthèse concise et utile pour un commercial. Mentionne les points clés, donne des insights si possible.
+Fais une synthèse concise et utile pour un commercial. Mentionne les points clés, donne des insights si possible.${
+    datasetsSection ? " Si des jeux de données publics sont pertinents, mentionne-les brièvement." : ""
+  }
 Ne génère PAS de JSON. Réponds en texte naturel français.`;
   const result = await model.generateContent(prompt);
   return result.response.text();
