@@ -1,65 +1,136 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { List, Map } from "lucide-react";
+import { SearchFilters } from "@/components/search-filters";
+import { SearchResults } from "@/components/search-results";
+import { EntrepriseDetail } from "@/components/entreprise-detail";
+import { AddToListDialog } from "@/components/add-to-list-dialog";
+import { MapView } from "@/components/map-view";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
+import type { Entreprise, SearchParams } from "@/types";
+
+export default function SearchPage() {
+  const [results, setResults] = useState<Entreprise[]>([]);
+  const [totalResults, setTotalResults] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [currentParams, setCurrentParams] = useState<SearchParams>({});
+  const [selectedSiren, setSelectedSiren] = useState<string | null>(null);
+  const [addToListEntreprise, setAddToListEntreprise] = useState<Entreprise | null>(null);
+
+  async function handleSearch(params: SearchParams, pageNum = 1) {
+    setLoading(true);
+    setCurrentParams(params);
+    setPage(pageNum);
+
+    try {
+      const searchParams = new URLSearchParams();
+      if (params.q) searchParams.set("q", params.q);
+      if (params.code_naf) searchParams.set("code_naf", params.code_naf);
+      if (params.code_postal) searchParams.set("code_postal", params.code_postal);
+      if (params.code_commune) searchParams.set("code_commune", params.code_commune);
+      if (params.departement) searchParams.set("departement", params.departement);
+      if (params.region) searchParams.set("region", params.region);
+      if (params.tranche_effectif_salarie) searchParams.set("tranche_effectif_salarie", params.tranche_effectif_salarie);
+      if (params.categorie_entreprise) searchParams.set("categorie_entreprise", params.categorie_entreprise);
+      if (params.nature_juridique) searchParams.set("nature_juridique", params.nature_juridique);
+      if (params.section_activite_principale) searchParams.set("section_activite_principale", params.section_activite_principale);
+      if (params.etat_administratif) searchParams.set("etat_administratif", params.etat_administratif);
+      if (params.est_ess !== undefined) searchParams.set("est_ess", String(params.est_ess));
+      if (params.est_qualiopi !== undefined) searchParams.set("est_qualiopi", String(params.est_qualiopi));
+      if (params.est_entrepreneur_individuel !== undefined) searchParams.set("est_entrepreneur_individuel", String(params.est_entrepreneur_individuel));
+      if (params.ca_min !== undefined) searchParams.set("ca_min", String(params.ca_min));
+      if (params.ca_max !== undefined) searchParams.set("ca_max", String(params.ca_max));
+      if (params.nom_personne) searchParams.set("nom_personne", params.nom_personne);
+      searchParams.set("page", String(pageNum));
+      if (params.per_page) searchParams.set("per_page", String(params.per_page));
+
+      const res = await fetch(`/api/search?${searchParams.toString()}`);
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      const data = await res.json();
+
+      setResults(data.results ?? []);
+      setTotalResults(data.total_results ?? 0);
+      setTotalPages(data.total_pages ?? 0);
+      setPage(data.page ?? pageNum);
+    } catch (err) {
+      console.error("Erreur de recherche:", err);
+      setResults([]);
+      setTotalResults(0);
+      setTotalPages(0);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handlePageChange(newPage: number) {
+    handleSearch(currentParams, newPage);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <div className="flex h-full">
+      {/* Left column: filters */}
+      <div className="w-72 border-r overflow-y-auto shrink-0">
+        <SearchFilters onSearch={(params) => handleSearch(params, 1)} loading={loading} />
+      </div>
+
+      {/* Right area: tabs with results / map */}
+      <div className="flex-1 flex flex-col overflow-hidden p-4">
+        <Tabs defaultValue="liste" className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="mb-4 w-fit">
+            <TabsTrigger value="liste">
+              <List className="h-4 w-4 mr-1.5" />
+              Liste
+            </TabsTrigger>
+            <TabsTrigger value="carte">
+              <Map className="h-4 w-4 mr-1.5" />
+              Carte
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="liste" className="flex-1 overflow-y-auto">
+            <SearchResults
+              results={results}
+              totalResults={totalResults}
+              page={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              onSelectEntreprise={(e) => setSelectedSiren(e.siren)}
+              onAddToList={setAddToListEntreprise}
+              loading={loading}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+          </TabsContent>
+
+          <TabsContent value="carte" className="flex-1 overflow-hidden">
+            <div className="h-full min-h-[500px]">
+              <MapView
+                entreprises={results}
+                onSelect={(e) => setSelectedSiren(e.siren)}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* EntrepriseDetail sheet */}
+      <EntrepriseDetail
+        siren={selectedSiren}
+        onClose={() => setSelectedSiren(null)}
+        onAddToList={setAddToListEntreprise}
+      />
+
+      {/* AddToList dialog */}
+      <AddToListDialog
+        entreprise={addToListEntreprise}
+        onClose={() => setAddToListEntreprise(null)}
+      />
     </div>
   );
 }
