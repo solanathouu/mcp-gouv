@@ -21,12 +21,14 @@ export default function SearchPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [currentParams, setCurrentParams] = useState<SearchParams>({});
   const [selectedSiren, setSelectedSiren] = useState<string | null>(null);
   const [addToListEntreprise, setAddToListEntreprise] = useState<Entreprise | null>(null);
 
   async function handleSearch(params: SearchParams, pageNum = 1) {
     setLoading(true);
+    setError(null);
     setCurrentParams(params);
     setPage(pageNum);
 
@@ -53,7 +55,12 @@ export default function SearchPage() {
       if (params.per_page) searchParams.set("per_page", String(params.per_page));
 
       const res = await fetch(`/api/search?${searchParams.toString()}`);
-      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error("429");
+        }
+        throw new Error(`${res.status}`);
+      }
       const data = await res.json();
 
       setResults(data.results ?? []);
@@ -61,7 +68,12 @@ export default function SearchPage() {
       setTotalPages(data.total_pages ?? 0);
       setPage(data.page ?? pageNum);
     } catch (err) {
-      console.error("Erreur de recherche:", err);
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("429")) {
+        setError("L'API est temporairement surchargée. Réessayez dans quelques secondes.");
+      } else {
+        setError("Une erreur est survenue lors de la recherche. Veuillez réessayer.");
+      }
       setResults([]);
       setTotalResults(0);
       setTotalPages(0);
@@ -83,6 +95,11 @@ export default function SearchPage() {
 
       {/* Right area: tabs with results / map */}
       <div className="flex-1 flex flex-col overflow-hidden p-4">
+        {error && (
+          <div className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
         <Tabs defaultValue="liste" className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mb-4 w-fit">
             <TabsTrigger value="liste">

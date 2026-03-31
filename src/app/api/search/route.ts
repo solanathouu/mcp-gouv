@@ -79,9 +79,11 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("[search] Error:", error);
+    const message = error instanceof Error ? error.message : "Erreur lors de la recherche";
+    const status = message.includes("429") ? 429 : 500;
     return NextResponse.json(
-      { error: "Erreur lors de la recherche" },
-      { status: 500 }
+      { error: message },
+      { status }
     );
   }
 }

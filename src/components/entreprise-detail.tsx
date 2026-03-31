@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Entreprise } from "@/types";
+import { formatEffectif } from "@/lib/format";
 
 interface EntrepriseDetailProps {
   siren: string | null;
@@ -26,27 +27,6 @@ function formatCA(value: number | null): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)} M€`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(0)} k€`;
   return `${value} €`;
-}
-
-function formatEffectif(tranche: string | null): string {
-  const map: Record<string, string> = {
-    "00": "0 salarié",
-    "01": "1-2 salariés",
-    "02": "3-5 salariés",
-    "03": "6-9 salariés",
-    "11": "10-19 salariés",
-    "12": "20-49 salariés",
-    "21": "50-99 salariés",
-    "22": "100-199 salariés",
-    "31": "200-249 salariés",
-    "32": "250-499 salariés",
-    "41": "500-999 salariés",
-    "42": "1 000-1 999 salariés",
-    "51": "2 000-4 999 salariés",
-    "52": "5 000-9 999 salariés",
-    "53": "10 000+ salariés",
-  };
-  return tranche ? (map[tranche] ?? tranche) : "N/D";
 }
 
 function Row({ label, value }: { label: string; value: string | null | undefined }) {

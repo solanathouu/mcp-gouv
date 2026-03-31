@@ -77,8 +77,14 @@ export async function GET() {
       total_recherches: totalRecherchesRow?.count ?? 0,
       par_secteur: parSecteur,
       par_departement: parDepartement,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      recherches_recentes: recherchesRecentes as any,
+        recherches_recentes: recherchesRecentes.map((r) => ({
+        id: r.id,
+        type: (r.type === "chat" || r.type === "filtre" ? r.type : "filtre") as "chat" | "filtre",
+        requete: r.requete,
+        nb_resultats: r.nb_resultats,
+        created_at: r.created_at,
+        resultats_ids: r.resultats_ids,
+      })),
     };
 
     return NextResponse.json(stats);
