@@ -10,7 +10,7 @@ Outil de prospection B2B exploitant les donnees ouvertes francaises (MCP DataGou
 | Config | Done — Next.js 15, SQLite, Gemini, Tailwind, shadcn/ui |
 | Tests | 34 tests passent (6 fichiers) — pas de tests d'integration |
 | Build | Clean — 4 pages statiques, 10 routes dynamiques |
-| Securite | Cle API purgee de l'historique git, .env gitignored |
+| Securite | Audit complet 2026-04-03 : DB files retires du tracking, .gitignore corrige, objets orphelins purges, .env gitignored |
 | MCP DataGouv | Integre dans chat (enrichissement datasets) et fiche entreprise |
 
 ## Stack
@@ -81,3 +81,7 @@ Dernier audit : 2026-03-31. Faiblesses restantes :
 ## Next Immediate Action
 
 Extraire la logique SSE en hook partage `src/hooks/useChat.ts` pour supprimer la duplication entre `page.tsx` et `chat-interface.tsx`, et reduire la taille de page.tsx.
+
+## Action requise (manuelle)
+
+Revoquer la cle Gemini `AIzaSyCteU7S_T72ojNqc6O18U2NmX9kWf_bUFg` dans Google Cloud Console et en generer une nouvelle dans `.env`.
